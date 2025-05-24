@@ -1,0 +1,12 @@
+- Implement simple yet fast hash table (CRC16 Hash)
+- Implement search algorithm to check if value exists(call it EXISTS)
+- Implement GET & SET functions
+
+
+
+
+
+Performance Metrics:
+
+CRC16 hashing function takes 2.8e-5 s / op
+
