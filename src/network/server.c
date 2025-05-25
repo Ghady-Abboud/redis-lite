@@ -1,4 +1,3 @@
-#include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +27,7 @@ void socket_init()
         {
             continue;
         }
-        do_something(connfd);
+        server_do_something(connfd);
         close(connfd);
         printf("Connection closed\n");
     }
@@ -36,11 +35,7 @@ void socket_init()
 
 int bind_socket(int fd)
 {
-    struct sockaddr_in addr = {};
-
-    addr.sin_family = DOMAIN;
-    addr.sin_port = htons(PORT);
-    addr.sin_addr.s_addr = htonl(0);
+    struct sockaddr_in addr = create_address(0);
     int rv = bind(fd, (const struct sockaddr *)&addr, sizeof(addr));
     if (rv)
     {
@@ -60,7 +55,7 @@ void listen_socket(int fd, int rv)
     }
 }
 
-void do_something(int connfd)
+void server_do_something(int connfd)
 {
     char rbuf[64] = {};
     ssize_t n = read(connfd, rbuf, sizeof(rbuf) - 1);
