@@ -36,7 +36,7 @@ void client_do_something(int fd)
 
     char rbuf[64] = {};
     ssize_t n = read(fd, rbuf, sizeof(rbuf) - 1);
-    if (n < 0)
+    if (n == -1)
     {
         perror("read()");
         exit(1);

@@ -6,5 +6,6 @@
 void socket_init();
 int bind_socket(int fd);
 void listen_socket(int fd, int rv);
-void server_do_something(int connfd);
+int32_t one_request(int connfd);
+
 #endif

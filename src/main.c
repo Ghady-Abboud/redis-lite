@@ -9,9 +9,27 @@
 char *command;
 char *commandType;
 
-int main()
+int main(int argc, char **argv)
 {
-    printf("Starting Redis-lite server...\n");
-    socket_init();
+    if (argc < 2)
+    {
+        printf("Usage: %s [server|client]\n", argv[0]);
+        return 1;
+    }
+    if (strcmp(argv[1], "server") == 0)
+    {
+        printf("Starting server...\n");
+        socket_init();
+    }
+    else if (strcmp(argv[1], "client") == 0)
+    {
+        printf("Starting client...\n");
+        client_socket_init();
+    }
+    else
+    {
+        printf("Invalid argument. Use 'server' or 'client'.\n");
+        return 1;
+    }
     client_socket_init();
 }

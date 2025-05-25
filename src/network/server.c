@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "network/server.h"
+#include "network/protocol.h"
 
 void socket_init()
 {
@@ -27,7 +28,14 @@ void socket_init()
         {
             continue;
         }
-        server_do_something(connfd);
+        while (1)
+        {
+            int32_t err = one_request(connfd);
+            if (err)
+            {
+                break;
+            }
+        }
         close(connfd);
         printf("Connection closed\n");
     }
@@ -55,17 +63,47 @@ void listen_socket(int fd, int rv)
     }
 }
 
-void server_do_something(int connfd)
+int32_t one_request(int connfd)
 {
-    char rbuf[64] = {};
-    ssize_t n = read(connfd, rbuf, sizeof(rbuf) - 1);
-    if (n < 0)
+    // 4 bytes header
+    char rbuf[K_MAX_HEADER + K_MAX_MSG];
+    errno = 0;
+    int32_t err = read_or_write_full(connfd, rbuf, K_MAX_HEADER, READ);
+    if (err)
+    {
+        if (errno == 0)
+        {
+            perror("EOF");
+        }
+        else
+        {
+            perror("read() error");
+        }
+        return err;
+    }
+
+    uint32_t len = 0;
+    memcpy(&len, rbuf, 4);
+    if (len > K_MAX_MSG)
+    {
+        perror("Message too long");
+        return -1;
+    }
+
+    err = read_or_write_full(connfd, &rbuf[K_MAX_HEADER], len, READ);
+    if (err)
     {
         perror("read() error");
-        return;
+        return err;
     }
-    printf("Client says: %s\n", rbuf);
 
-    char wbuf[64] = "Hello from server!\n";
-    write(connfd, wbuf, strlen(wbuf));
+    printf("Client says: %.*s\n", len, &rbuf[K_MAX_HEADER]);
+
+    // Reply
+    const char reply[] = "Hello from server";
+    char wbuf[K_MAX_HEADER + sizeof(reply)];
+    len = (uint32_t)strlen(reply);
+    memcpy(wbuf, &len, 4);
+    memcpy(&wbuf[K_MAX_HEADER], reply, len);
+    return read_or_write_full(connfd, wbuf, K_MAX_HEADER + len, WRITE);
 }
