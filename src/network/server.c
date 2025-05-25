@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "server/server.h"
+#include "network/server.h"
 
 void socket_init()
 {

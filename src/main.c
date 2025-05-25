@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "hash/crc.h"
-#include "server/server.h"
+#include "network/server.h"
 
 #define MAX_LINE_LENGTH 256
 

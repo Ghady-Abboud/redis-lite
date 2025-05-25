@@ -1,2 +1,3 @@
+.vscode
 build
 valgrind-out.txt
