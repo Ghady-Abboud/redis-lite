@@ -20,8 +20,7 @@ int32_t read_or_write_full(int fd, char *buf, size_t n, int is_read)
 
         if (rv <= 0)
         {
-            perror(is_read ? "read_full()" : "write_full()");
-            return -1;
+            return -1; // Error or EOF
         }
         assert((size_t)rv <= n);
         n -= (size_t)rv;
