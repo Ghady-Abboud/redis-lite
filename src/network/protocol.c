@@ -18,7 +18,7 @@ int32_t read_or_write_full(int fd, char *buf, size_t n, int is_read)
             rv = write(fd, buf, n);
         }
 
-        if (rv < 0)
+        if (rv <= 0)
         {
             perror(is_read ? "read_full()" : "write_full()");
             return -1;
