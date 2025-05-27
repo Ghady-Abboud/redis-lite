@@ -15,7 +15,7 @@ void client_socket_init()
     int fd = socket(AF_INET, SOCK_STREAM, 0);
 
     client_connect_socket(fd);
-    client_do_something(fd);
+    send_multiple_requests(fd);
 }
 
 void client_connect_socket(int fd)
@@ -30,52 +30,53 @@ void client_connect_socket(int fd)
     }
 }
 
-void client_do_something(int fd)
+int send_multiple_requests(int fd)
 {
-    const char msg[] = "hello";
-    uint32_t len = strlen(msg);
+    int32_t err = query(fd, "hello1");
+    if (err)
+        goto L_DONE;
 
-    // Send length first (4 bytes)
+    err = query(fd, "hello2");
+    if (err)
+        goto L_DONE;
+    err = query(fd, "hello3");
+    if (err)
+        goto L_DONE;
+L_DONE:
+    close(fd);
+    return 0;
+}
+
+int32_t query(int fd, const char *text)
+{
+    uint32_t len = strlen(text);
+
     int32_t err = read_or_write_full(fd, (char *)&len, 4, WRITE);
     if (err)
-    {
-        perror("write length error");
-        return;
-    }
+        return err;
 
-    // Send message data
-    err = read_or_write_full(fd, (char *)msg, len, WRITE);
+    err = read_or_write_full(fd, (char *)text, len, WRITE);
     if (err)
-    {
-        perror("write message error");
-        return;
-    }
+        return err;
 
-    // Read server's response length
     char rbuf[4];
     err = read_or_write_full(fd, rbuf, 4, READ);
     if (err)
-    {
-        perror("read response length error");
-        return;
-    }
+        return err;
 
     uint32_t reply_len;
     memcpy(&reply_len, rbuf, 4);
 
-    // Read server's response message
     if (reply_len > 0 && reply_len < 1024)
     {
         char reply[1024];
         err = read_or_write_full(fd, reply, reply_len, READ);
         if (err)
-        {
-            perror("read response message error");
-            return;
-        }
+            return err;
+
         reply[reply_len] = '\0';
-        printf("Server says: %s\n", reply);
+        printf("Server replied: %s\n", reply);
     }
 
-    close(fd);
+    return 0;
 }

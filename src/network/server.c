@@ -68,12 +68,15 @@ int32_t one_request(int connfd)
     // 4 bytes header
     char rbuf[K_MAX_HEADER + K_MAX_MSG];
     errno = 0;
+
+    printf("[DEBUG] About to read header\n");
     int32_t err = read_or_write_full(connfd, rbuf, K_MAX_HEADER, READ);
+    printf("[DEBUG] read_or_write_full() returned %d\n", err);
     if (err)
     {
         if (errno == 0)
         {
-            perror("EOF");
+            perror("[DEBUG] Client disconnected EOF");
         }
         else
         {
@@ -90,6 +93,7 @@ int32_t one_request(int connfd)
         return -1;
     }
 
+    printf("[DEBUG] About to read message\n");
     err = read_or_write_full(connfd, &rbuf[K_MAX_HEADER], len, READ);
     if (err)
     {
@@ -105,5 +109,6 @@ int32_t one_request(int connfd)
     len = (uint32_t)strlen(reply);
     memcpy(wbuf, &len, 4);
     memcpy(&wbuf[K_MAX_HEADER], reply, len);
+
     return read_or_write_full(connfd, wbuf, K_MAX_HEADER + len, WRITE);
 }
