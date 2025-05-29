@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,19 @@
 
 #include "network/server.h"
 #include "network/protocol.h"
+#include "network/buffer.h"
+
+struct Conn
+{
+    int fd;
+
+    bool want_read;
+    bool want_write;
+    bool want_close;
+
+    struct Buffer incoming;
+    struct Buffer outgoing;
+};
 
 void socket_init()
 {
