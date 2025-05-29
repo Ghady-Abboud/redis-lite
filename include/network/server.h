@@ -1,7 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "network/common.h"
+#include "network/commonSocket.h"
 
 void socket_init();
 int bind_socket(int fd);
