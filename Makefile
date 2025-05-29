@@ -33,12 +33,30 @@ $(BUILD):
 clean:
 	rm -rf $(BUILD)
 
-# ––– Run with Valgrind and show output in real-time
-.PHONY: valgrind-live
-valgrind-live: $(BUILD)/main
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 ./$(BUILD)/main
+# ––– Run server with Valgrind
+.PHONY: valgrind-server
+valgrind-server: $(BUILD)/main
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 $(BUILD)/main server
 
-# ––– Run with Valgrind and save output to file
-.PHONY: valgrind
-valgrind: $(BUILD)/main
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 --log-file=valgrind-out.txt ./$(BUILD)/main
+# ––– Run client with Valgrind
+.PHONY: valgrind-client
+valgrind-client: $(BUILD)/main
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 $(BUILD)/main client
+
+# ––– Run server with Valgrind and save to file
+.PHONY: valgrind-server-log
+valgrind-server-log: $(BUILD)/main
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 --log-file=valgrind-server.txt $(BUILD)/main server
+
+# ––– Run client with Valgrind and save to file
+.PHONY: valgrind-client-log
+valgrind-client-log: $(BUILD)/main
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 --log-file=valgrind-client.txt $(BUILD)/main client
+
+# ––– Convenience targets for normal execution
+.PHONY: server client
+server: $(BUILD)/main
+	$(BUILD)/main server
+
+client: $(BUILD)/main
+	$(BUILD)/main client
