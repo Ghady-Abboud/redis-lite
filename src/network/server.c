@@ -35,6 +35,8 @@ void socket_init()
     listen_socket(fd, rv);
 
     struct Conn **fd_to_conn = malloc(sizeof(struct Conn *) * MAX_CONNECTIONS);
+    size_t fd_to_conn_size = 0;
+
     for (int i = 0; i < MAX_CONNECTIONS; i++)
     {
         fd_to_conn[i] = NULL;
@@ -52,40 +54,55 @@ void socket_init()
             poll_capacity = 16;
             poll_args = realloc(poll_args, sizeof(struct pollfd) * poll_capacity);
         }
-        struct pollfd pfd = {fd, POLLIN, 0};
-        poll_args[poll_count++] = pfd;
 
-        for (size_t i = 0; i < MAX_CONNECTIONS; i++)
+        poll_args[poll_count++] = (struct pollfd){fd, POLLIN, 0};
+
+        for (size_t i = 0; i < fd_to_conn_size; i++)
         {
             if (fd_to_conn[i] == NULL)
             {
                 continue;
             }
 
+            if (poll_count >= poll_capacity)
+            {
+                poll_capacity *= 2;
+                poll_args = realloc(poll_args, sizeof(struct pollfd) * poll_capacity);
+            }
+
             struct Conn *conn = fd_to_conn[i];
             struct pollfd pfd = {conn->fd, POLLERR, 0};
 
             if (conn->want_read)
-            {
                 pfd.events |= POLLIN;
-            }
             if (conn->want_write)
-            {
                 pfd.events |= POLLOUT;
-            }
 
             poll_args[poll_count++] = pfd;
         }
 
         int rv = poll(poll_args, (nfds_t)poll_count, -1);
         if (rv < 0 && errno == EINTR)
-        {
             continue;
-        }
         if (rv < 0)
         {
             perror("poll()");
             exit(1);
+        }
+
+        if (poll_args[0].revents)
+        {
+            struct Conn *conn = handle_accept(fd);
+            if (conn)
+            {
+                if (fd_to_conn_size <= (size_t)conn->fd)
+                {
+                    size_t new_size = conn->fd + 1;
+                    fd_to_conn = realloc(fd_to_conn, sizeof(struct Conn *) * new_size);
+                    fd_to_conn_size = new_size;
+                }
+                fd_to_conn[conn->fd] = conn;
+            }
         }
     }
 }
