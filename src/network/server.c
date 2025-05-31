@@ -105,7 +105,7 @@ void socket_init()
             }
         }
 
-        for (size_t i = 0; i < poll_count; ++i) // Skipping the first
+        for (size_t i = 1; i < poll_count; ++i)
         {
             uint32_t ready = poll_args[i].revents;
             struct Conn *conn = fd_to_conn[poll_args[i].fd];
@@ -113,6 +113,13 @@ void socket_init()
                 handle_read(conn);
             if (ready && POLLOUT)
                 handle_write(conn);
+
+            if ((ready && POLLERR) || conn->want_close)
+            {
+                (void)close(conn->fd);
+                fd_to_conn[conn->fd] = NULL;
+                free(conn);
+            }
         }
     }
 }
