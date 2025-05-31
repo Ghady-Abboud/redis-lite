@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "network/server.h"
 #include "network/protocol.h"
@@ -190,4 +191,24 @@ int32_t one_request(int connfd)
     memcpy(&wbuf[K_MAX_HEADER], reply, len);
 
     return read_or_write_full(connfd, wbuf, K_MAX_HEADER + len, WRITE);
+}
+
+void fd_set_nonblocking(int fd)
+{
+    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+}
+
+struct Conn *handle_accept(int fd)
+{
+    struct sockaddr_in client_addr = {};
+    socklen_t addrlen = sizeof(client_addr);
+    int connfd = accept(fd, (struct sockddr *)&client_addr, &addrlen);
+    if (connfd < 0)
+        return NULL;
+
+    fd_set_nonblocking(connfd);
+    struct Conn *conn = malloc(sizeof(struct Conn));
+    conn->fd = connfd;
+    conn->want_read = true;
+    return conn;
 }
