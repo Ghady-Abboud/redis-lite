@@ -104,6 +104,16 @@ void socket_init()
                 fd_to_conn[conn->fd] = conn;
             }
         }
+
+        for (size_t i = 0; i < poll_count; ++i) // Skipping the first
+        {
+            uint32_t ready = poll_args[i].revents;
+            struct Conn *conn = fd_to_conn[poll_args[i].fd];
+            if (ready && POLLIN)
+                handle_read(conn);
+            if (ready && POLLOUT)
+                handle_write(conn);
+        }
     }
 }
 
@@ -166,7 +176,6 @@ int32_t one_request(int connfd)
 
     printf("Client says: %.*s\n", len, &rbuf[K_MAX_HEADER]);
 
-    // Reply
     const char reply[] = "Hello from server";
     char wbuf[K_MAX_HEADER + sizeof(reply)];
     len = (uint32_t)strlen(reply);
