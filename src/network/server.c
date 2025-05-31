@@ -9,7 +9,6 @@
 #include <fcntl.h>
 
 #include "network/server.h"
-#include "network/protocol.h"
 #include "network/buffer.h"
 
 struct Conn
@@ -120,7 +119,6 @@ void socket_init()
             if (fd < 0 || fd >= (int)fd_to_conn_size)
                 continue;
 
-            printf("This is fd: %d\n", fd);
             struct Conn *conn = fd_to_conn[fd];
             if (ready & POLLIN)
                 handle_read(conn);
@@ -159,89 +157,9 @@ void listen_socket(int fd, int rv)
     }
 }
 
-int32_t one_request(int connfd)
-{
-    // 4 bytes header
-    char rbuf[4 + K_MAX_MSG];
-    errno = 0;
-
-    int32_t err = read_or_write_full(connfd, rbuf, 4, READ);
-    if (err)
-    {
-        if (errno == 0)
-        {
-            perror("Reached EOF");
-        }
-        else
-        {
-            perror("read() error");
-        }
-        return err;
-    }
-
-    uint32_t len = 0;
-    memcpy(&len, rbuf, 4);
-    if (len > K_MAX_MSG)
-    {
-        perror("Message too long");
-        return -1;
-    }
-
-    err = read_or_write_full(connfd, &rbuf[4], len, READ);
-    if (err)
-    {
-        perror("read() error");
-        return err;
-    }
-
-    printf("Client says: %.*s\n", len, &rbuf[4]);
-
-    const char reply[] = "Hello from server";
-    char wbuf[4 + sizeof(reply)];
-    len = (uint32_t)strlen(reply);
-    memcpy(wbuf, &len, 4);
-    memcpy(&wbuf[4], reply, len);
-
-    return read_or_write_full(connfd, wbuf, 4 + len, WRITE);
-}
-
 void fd_set_nonblocking(int fd)
 {
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
-}
-
-struct Conn *handle_accept(int fd)
-{
-    struct sockaddr_in client_addr = {};
-    socklen_t addrlen = sizeof(client_addr);
-    int connfd = accept(fd, (struct sockaddr *)&client_addr, &addrlen);
-    if (connfd < 0)
-        return NULL;
-
-    fd_set_nonblocking(connfd);
-
-    struct Conn *conn = malloc(sizeof(struct Conn));
-    conn->fd = connfd;
-    conn->want_read = true;
-    conn->want_write = false;
-    conn->want_close = false;
-
-    if (init_buffer(&conn->incoming, 1024) != 0)
-    {
-        free(conn);
-        close(connfd);
-        return NULL;
-    }
-
-    if (init_buffer(&conn->outgoing, 1024) != 0)
-    {
-        free_buffer(&conn->incoming);
-        free(conn);
-        close(connfd);
-        return NULL;
-    }
-
-    return conn;
 }
 
 bool try_one_request(struct Conn *conn)
@@ -251,7 +169,7 @@ bool try_one_request(struct Conn *conn)
 
     uint32_t len = 0;
     memcpy(&len, conn->incoming.data, 4);
-    if (len > K_MAX_MSG)
+    if (len > 4096)
     {
         conn->want_close = true;
         return false;
@@ -307,4 +225,37 @@ void handle_write(struct Conn *conn)
         conn->want_read = true;
         conn->want_write = false;
     }
+}
+struct Conn *handle_accept(int fd)
+{
+    struct sockaddr_in client_addr = {};
+    socklen_t addrlen = sizeof(client_addr);
+    int connfd = accept(fd, (struct sockaddr *)&client_addr, &addrlen);
+    if (connfd < 0)
+        return NULL;
+
+    fd_set_nonblocking(connfd);
+
+    struct Conn *conn = malloc(sizeof(struct Conn));
+    conn->fd = connfd;
+    conn->want_read = true;
+    conn->want_write = false;
+    conn->want_close = false;
+
+    if (init_buffer(&conn->incoming, 1024) != 0)
+    {
+        free(conn);
+        close(connfd);
+        return NULL;
+    }
+
+    if (init_buffer(&conn->outgoing, 1024) != 0)
+    {
+        free_buffer(&conn->incoming);
+        free(conn);
+        close(connfd);
+        return NULL;
+    }
+
+    return conn;
 }
