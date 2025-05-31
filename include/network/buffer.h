@@ -14,5 +14,7 @@ struct Buffer
 int init_buffer(struct Buffer *buffer, size_t initial_capacity);
 void free_buffer(struct Buffer *buffer);
 int resize_buffer(struct Buffer *buffer, size_t new_capacity);
+void buf_append(struct Buffer *buffer, const uint8_t *data, size_t len);
+void buf_consume(struct Buffer *buffer, size_t len);
 
 #endif

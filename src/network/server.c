@@ -1,6 +1,6 @@
+#include <assert.h>
 #include <errno.h>
 #include <poll.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -202,13 +202,95 @@ struct Conn *handle_accept(int fd)
 {
     struct sockaddr_in client_addr = {};
     socklen_t addrlen = sizeof(client_addr);
-    int connfd = accept(fd, (struct sockddr *)&client_addr, &addrlen);
+    int connfd = accept(fd, (struct sockaddr *)&client_addr, &addrlen);
     if (connfd < 0)
         return NULL;
 
     fd_set_nonblocking(connfd);
+
     struct Conn *conn = malloc(sizeof(struct Conn));
     conn->fd = connfd;
     conn->want_read = true;
+    conn->want_write = false;
+    conn->want_close = false;
+
+    if (init_buffer(&conn->incoming, 1024) != 0)
+    {
+        free(conn);
+        close(connfd);
+        return NULL;
+    }
+
+    if (init_buffer(&conn->outgoing, 1024) != 0)
+    {
+        free_buffer(&conn->incoming);
+        free(conn);
+        close(connfd);
+        return NULL;
+    }
+
     return conn;
+}
+
+bool try_one_request(struct Conn *conn)
+{
+    if (conn->incoming.size < K_MAX_HEADER)
+        return false;
+
+    uint32_t len = 0;
+    memcpy(&len, conn->incoming.data, K_MAX_HEADER);
+    if (len > K_MAX_MSG)
+    {
+        conn->want_close = true;
+        return false;
+    }
+
+    if (K_MAX_HEADER + len > conn->incoming.size)
+        return false;
+
+    const uint8_t *request = &conn->incoming.data[K_MAX_HEADER];
+
+    buf_append(&conn->outgoing, (const uint8_t *)&len, K_MAX_HEADER);
+    buf_append(&conn->outgoing, request, (size_t)len);
+    buf_consume(&conn->incoming, K_MAX_HEADER + len);
+    return true;
+}
+
+void handle_read(struct Conn *conn)
+{
+    uint8_t buf[64 * 1024];
+    ssize_t rv = read(conn->fd, buf, sizeof(buf));
+    if (rv <= 0)
+    {
+        conn->want_close = true;
+        return;
+    }
+
+    buf_append(&conn->incoming, buf, (size_t)rv);
+    try_one_request(conn);
+
+    if (conn->outgoing.size > 0)
+    {
+        conn->want_read = false;
+        conn->want_write = true;
+    }
+}
+
+void handle_write(struct Conn *conn)
+{
+    assert(conn->outgoing.size > 0);
+    ssize_t rv = write(conn->fd, conn->outgoing.data, conn->outgoing.size);
+    if (rv < 0)
+    {
+        conn->want_close = true;
+        return;
+    }
+
+    buf_consume(&conn->outgoing, (size_t)rv);
+
+    if (conn->outgoing.size == 0)
+    {
+        conn->want_read = true;
+        conn->want_write = false;
+    }
 }

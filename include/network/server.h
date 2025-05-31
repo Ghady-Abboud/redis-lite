@@ -1,6 +1,8 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <stdbool.h>
+
 #include "network/commonSocket.h"
 
 #define MAX_CONNECTIONS 100
@@ -11,5 +13,8 @@ void listen_socket(int fd, int rv);
 int32_t one_request(int connfd);
 void fd_set_nonblocking(int fd);
 struct Conn *handle_accept(int fd);
+void handle_write(struct Conn *conn);
+void handle_read(struct Conn *conn);
+bool try_one_request(struct Conn *conn);
 
 #endif

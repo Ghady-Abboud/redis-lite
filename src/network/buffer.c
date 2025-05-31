@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "network/buffer.h"
 
@@ -34,4 +35,26 @@ int resize_buffer(struct Buffer *buffer, size_t new_capacity)
     buffer->capacity = new_capacity;
 
     return 0;
+}
+
+void buf_append(struct Buffer *buffer, const uint8_t *data, size_t len)
+{
+    if (buffer->size + len > buffer->capacity)
+    {
+        if (resize_buffer(buffer, buffer->size + len) != 0)
+        {
+            return;
+        }
+    }
+    memcpy(buffer->data + buffer->size, data, len);
+    buffer->size += len;
+}
+
+void buf_consume(struct Buffer *buffer, size_t len)
+{
+    if (len >= buffer->size)
+        buffer->size = 0;
+
+    memcpy(buffer->data, buffer->data + len, buffer->size - len);
+    buffer->size -= len;
 }
