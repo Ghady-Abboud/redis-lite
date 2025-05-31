@@ -40,7 +40,7 @@ void socket_init()
         fd_to_conn[i] = NULL;
     }
 
-    struct pollfd *poll_args = NULL;
+    struct pollfd *poll_args;
     size_t poll_count = 0;
     size_t poll_capacity = 0;
 
@@ -75,6 +75,17 @@ void socket_init()
             }
 
             poll_args[poll_count++] = pfd;
+        }
+
+        int rv = poll(poll_args, (nfds_t)poll_count, -1);
+        if (rv < 0 && errno == EINTR)
+        {
+            continue;
+        }
+        if (rv < 0)
+        {
+            perror("poll()");
+            exit(1);
         }
     }
 }
