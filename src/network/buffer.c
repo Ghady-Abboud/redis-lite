@@ -52,9 +52,6 @@ void buf_append(struct Buffer *buffer, const uint8_t *data, size_t len)
 
 void buf_consume(struct Buffer *buffer, size_t len)
 {
-    if (len >= buffer->size)
-        buffer->size = 0;
-
     memcpy(buffer->data, buffer->data + len, buffer->size - len);
     buffer->size -= len;
 }

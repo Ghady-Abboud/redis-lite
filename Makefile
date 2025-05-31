@@ -1,6 +1,6 @@
 # ––– Tools & flags
 CC      := gcc
-CFLAGS  := -std=c11 -Wall -Iinclude
+CFLAGS  := -std=c11 -Wall -Iinclude -g
 DEBUG   := -g
 
 # ––– Folders

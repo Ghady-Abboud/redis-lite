@@ -35,7 +35,7 @@ void socket_init()
     int rv = bind_socket(fd);
     listen_socket(fd, rv);
 
-    struct Conn **fd_to_conn = malloc(sizeof(struct Conn *) * MAX_CONNECTIONS);
+    struct Conn **fd_to_conn = calloc(MAX_CONNECTIONS, sizeof(struct Conn *));
     size_t fd_to_conn_size = 0;
 
     for (int i = 0; i < MAX_CONNECTIONS; i++)
@@ -43,7 +43,7 @@ void socket_init()
         fd_to_conn[i] = NULL;
     }
 
-    struct pollfd *poll_args;
+    struct pollfd *poll_args = NULL;
     size_t poll_count = 0;
     size_t poll_capacity = 0;
 
@@ -100,6 +100,12 @@ void socket_init()
                 {
                     size_t new_size = conn->fd + 1;
                     fd_to_conn = realloc(fd_to_conn, sizeof(struct Conn *) * new_size);
+
+                    for (size_t j = fd_to_conn_size; j < new_size; j++)
+                    {
+                        fd_to_conn[j] = NULL;
+                    }
+
                     fd_to_conn_size = new_size;
                 }
                 fd_to_conn[conn->fd] = conn;
@@ -109,13 +115,19 @@ void socket_init()
         for (size_t i = 1; i < poll_count; ++i)
         {
             uint32_t ready = poll_args[i].revents;
-            struct Conn *conn = fd_to_conn[poll_args[i].fd];
-            if (ready && POLLIN)
+            int fd = poll_args[i].fd;
+
+            if (fd < 0 || fd >= (int)fd_to_conn_size)
+                continue;
+
+            printf("This is fd: %d\n", fd);
+            struct Conn *conn = fd_to_conn[fd];
+            if (ready & POLLIN)
                 handle_read(conn);
-            if (ready && POLLOUT)
+            if (ready & POLLOUT)
                 handle_write(conn);
 
-            if ((ready && POLLERR) || conn->want_close)
+            if ((ready & POLLERR) || conn->want_close)
             {
                 (void)close(conn->fd);
                 fd_to_conn[conn->fd] = NULL;
@@ -150,10 +162,10 @@ void listen_socket(int fd, int rv)
 int32_t one_request(int connfd)
 {
     // 4 bytes header
-    char rbuf[K_MAX_HEADER + K_MAX_MSG];
+    char rbuf[4 + K_MAX_MSG];
     errno = 0;
 
-    int32_t err = read_or_write_full(connfd, rbuf, K_MAX_HEADER, READ);
+    int32_t err = read_or_write_full(connfd, rbuf, 4, READ);
     if (err)
     {
         if (errno == 0)
@@ -175,22 +187,22 @@ int32_t one_request(int connfd)
         return -1;
     }
 
-    err = read_or_write_full(connfd, &rbuf[K_MAX_HEADER], len, READ);
+    err = read_or_write_full(connfd, &rbuf[4], len, READ);
     if (err)
     {
         perror("read() error");
         return err;
     }
 
-    printf("Client says: %.*s\n", len, &rbuf[K_MAX_HEADER]);
+    printf("Client says: %.*s\n", len, &rbuf[4]);
 
     const char reply[] = "Hello from server";
-    char wbuf[K_MAX_HEADER + sizeof(reply)];
+    char wbuf[4 + sizeof(reply)];
     len = (uint32_t)strlen(reply);
     memcpy(wbuf, &len, 4);
-    memcpy(&wbuf[K_MAX_HEADER], reply, len);
+    memcpy(&wbuf[4], reply, len);
 
-    return read_or_write_full(connfd, wbuf, K_MAX_HEADER + len, WRITE);
+    return read_or_write_full(connfd, wbuf, 4 + len, WRITE);
 }
 
 void fd_set_nonblocking(int fd)
@@ -234,25 +246,27 @@ struct Conn *handle_accept(int fd)
 
 bool try_one_request(struct Conn *conn)
 {
-    if (conn->incoming.size < K_MAX_HEADER)
+    if (conn->incoming.size < 4)
         return false;
 
     uint32_t len = 0;
-    memcpy(&len, conn->incoming.data, K_MAX_HEADER);
+    memcpy(&len, conn->incoming.data, 4);
     if (len > K_MAX_MSG)
     {
         conn->want_close = true;
         return false;
     }
 
-    if (K_MAX_HEADER + len > conn->incoming.size)
+    if (4 + len > conn->incoming.size)
         return false;
 
-    const uint8_t *request = &conn->incoming.data[K_MAX_HEADER];
+    const uint8_t *request = &conn->incoming.data[4];
 
-    buf_append(&conn->outgoing, (const uint8_t *)&len, K_MAX_HEADER);
+    buf_append(&conn->outgoing, (const uint8_t *)&len, 4);
     buf_append(&conn->outgoing, request, (size_t)len);
-    buf_consume(&conn->incoming, K_MAX_HEADER + len);
+    buf_consume(&conn->incoming, 4 + len);
+
+    conn->want_read = true;
     return true;
 }
 
