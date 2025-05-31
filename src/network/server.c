@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,25 +34,48 @@ void socket_init()
     int rv = bind_socket(fd);
     listen_socket(fd, rv);
 
+    struct Conn **fd_to_conn = malloc(sizeof(struct Conn *) * MAX_CONNECTIONS);
+    for (int i = 0; i < MAX_CONNECTIONS; i++)
+    {
+        fd_to_conn[i] = NULL;
+    }
+
+    struct pollfd *poll_args = NULL;
+    size_t poll_count = 0;
+    size_t poll_capacity = 0;
+
     while (1)
     {
-        struct sockaddr_in client_addr = {};
-        socklen_t addr_len = sizeof(client_addr);
-        int connfd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
-        if (connfd < 0)
+        poll_count = 0;
+        if (poll_capacity == 0)
         {
-            continue;
+            poll_capacity = 16;
+            poll_args = realloc(poll_args, sizeof(struct pollfd) * poll_capacity);
         }
-        while (1)
+        struct pollfd pfd = {fd, POLLIN, 0};
+        poll_args[poll_count++] = pfd;
+
+        for (size_t i = 0; i < MAX_CONNECTIONS; i++)
         {
-            int32_t err = one_request(connfd);
-            if (err)
+            if (fd_to_conn[i] == NULL)
             {
-                break;
+                continue;
             }
+
+            struct Conn *conn = fd_to_conn[i];
+            struct pollfd pfd = {conn->fd, POLLERR, 0};
+
+            if (conn->want_read)
+            {
+                pfd.events |= POLLIN;
+            }
+            if (conn->want_write)
+            {
+                pfd.events |= POLLOUT;
+            }
+
+            poll_args[poll_count++] = pfd;
         }
-        close(connfd);
-        printf("Connection closed\n");
     }
 }
 

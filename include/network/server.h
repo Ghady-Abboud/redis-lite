@@ -3,6 +3,8 @@
 
 #include "network/commonSocket.h"
 
+#define MAX_CONNECTIONS 100
+
 void socket_init();
 int bind_socket(int fd);
 void listen_socket(int fd, int rv);
