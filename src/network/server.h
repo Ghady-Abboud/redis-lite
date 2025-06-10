@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "network/commonSocket.h"
+#include "commonSocket.h"
 
 #define MAX_CONNECTIONS 100
 

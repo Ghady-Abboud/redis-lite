@@ -1,7 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "network/commonSocket.h"
+#include "commonSocket.h"
 
 void client_socket_init();
 void client_connect_socket(int fd);

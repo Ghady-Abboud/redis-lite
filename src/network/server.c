@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "network/server.h"
-#include "network/buffer.h"
+#include "server.h"
+#include "buffer.h"
 
 struct Conn
 {

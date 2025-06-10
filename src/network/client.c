@@ -5,8 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <network/client.h>
-#include <network/protocol.h>
+#include "client.h"
+#include "protocol.h"
 
 void client_socket_init()
 {

@@ -1,5 +1,5 @@
 #include <arpa/inet.h>
-#include "network/commonSocket.h"
+#include "commonSocket.h"
 
 struct sockaddr_in create_address(int use_loopback)
 {

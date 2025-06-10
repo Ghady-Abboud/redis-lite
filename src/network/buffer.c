@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "network/buffer.h"
+#include "buffer.h"
 
 int init_buffer(struct Buffer *buffer, size_t initial_capacity)
 {

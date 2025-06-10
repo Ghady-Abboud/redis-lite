@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include "network/protocol.h"
+#include "protocol.h"
 
 int32_t read_or_write_full(int fd, char *buf, size_t n, int is_read)
 {
