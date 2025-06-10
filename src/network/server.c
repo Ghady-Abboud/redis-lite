@@ -179,6 +179,12 @@ bool try_one_request(struct Conn *conn)
         return false;
 
     const uint8_t *request = &conn->incoming.data[4];
+    struct Commands *commands = {0};
+    if (parse_req(request, (size_t)len, commands) < 0)
+    {
+        conn->want_close = true;
+        return false;
+    }
 
     buf_append(&conn->outgoing, (const uint8_t *)&len, 4);
     buf_append(&conn->outgoing, request, (size_t)len);
@@ -186,6 +192,11 @@ bool try_one_request(struct Conn *conn)
 
     conn->want_read = true;
     return true;
+}
+
+int32_t parse_req(const uint8_t *data, size_t size, struct Commands *commands)
+{
+    return -1;
 }
 
 void handle_read(struct Conn *conn)

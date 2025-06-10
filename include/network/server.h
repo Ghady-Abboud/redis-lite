@@ -7,6 +7,13 @@
 
 #define MAX_CONNECTIONS 100
 
+struct Commands
+{
+    char **commands;
+    size_t count;
+    size_t capacity;
+};
+
 void socket_init();
 int bind_socket(int fd);
 void listen_socket(int fd, int rv);
@@ -16,5 +23,6 @@ struct Conn *handle_accept(int fd);
 void handle_write(struct Conn *conn);
 void handle_read(struct Conn *conn);
 bool try_one_request(struct Conn *conn);
+int32_t parse_req(const uint8_t *data, size_t size, struct Commands *commands);
 
 #endif
