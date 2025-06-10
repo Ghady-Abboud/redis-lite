@@ -169,7 +169,7 @@ bool try_one_request(struct Conn *conn)
 
     uint32_t len = 0;
     memcpy(&len, conn->incoming.data, 4);
-    if (len > 4096)
+    if (len > MAX_REQUEST_SIZE)
     {
         conn->want_close = true;
         return false;
@@ -196,7 +196,32 @@ bool try_one_request(struct Conn *conn)
 
 int32_t parse_req(const uint8_t *data, size_t size, struct Commands *commands)
 {
-    return -1;
+    const uint8_t *end = data + size;
+    uint32_t nstr = 0;
+    if (!read_u32(&data, end, &nstr)){
+        return -1;
+    }
+    if (nstr > MAX_REQUEST_SIZE) {
+        return -1;
+    }
+
+    while (commands->count < nstr) {
+        uint32_t len = 0;
+        if (!read_u32(&data, end, &len)) {
+            return -1;
+        }
+        commands->commands[commands->count] = malloc(len + 1);
+        if (!read_str(&data, end, len, commands->commands[commands->count])) {
+            for (size_t i = 0; i < commands->count;i++) {
+                free(commands->commands[i]);
+            }
+            return -1;
+        }
+    }
+    if (data != end) {
+        return -1;
+    }
+    return 0;
 }
 
 void handle_read(struct Conn *conn)
@@ -269,4 +294,27 @@ struct Conn *handle_accept(int fd)
     }
 
     return conn;
+}
+
+bool read_u32(const uint8_t **data, const uint8_t *end, uint32_t *out)
+{
+    if (*data + 4 > end)
+    {
+        return false;
+    }
+    memcpy(out, *data, 4);
+    *data += 4;
+    return true;
+}
+
+bool read_str(const uint8_t **data, const uint8_t *end, size_t n, char *out)
+{
+    if (*data + n > end)
+    {
+        return false;
+    }
+    memcpy(out, *data, n);
+    out[n] = '\0';
+    *data += n;
+    return true;
 }
