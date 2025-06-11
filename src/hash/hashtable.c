@@ -22,6 +22,8 @@ HashTable *create_table(int size) {
 
     for (int i =0;i<table->size;i++)
         table->items[i] = NULL;
+
+    table->overflow_buckets = create_overflow_buckets(table);
     return table;
 }
 
@@ -39,6 +41,7 @@ void free_table(HashTable *table) {
             free_item(item);
         }
     }
+    free_overflow_buckets(table);
     free(table->items);
     free(table);
 }
@@ -62,22 +65,42 @@ void ht_insert(HashTable *table, char *key, char *value) {
             strcpy(table->items[index] -> value, value);
             return;
         } else {
-            handle_collision(table, item);
+            handle_collision(table, index, item);
         }
     }
 }
 
-void handle_collision(HashTable *table, Ht_item *item) {
-    return ;
+void handle_collision(HashTable *table, unsigned long index, Ht_item *item) {
+    LinkedList *head = table->overflow_buckets[index];
+
+    if (head == NULL) {
+        head = allocate_list();
+        head->item = item;
+        table->overflow_buckets[index] = head;
+        return;
+    } else {
+        table->overflow_buckets[index] = linked_list_insert(head, item);
+        return;
+    }
 }
 
 char *ht_search(HashTable *table, char *key) {
     int index = hash_string(0,key, strlen(key));
     Ht_item *item = table->items[index];
+    LinkedList *head = table->overflow_buckets[index];
 
     if (item != NULL) {
-        if (strcmp(item->key, key) == 0) {
+        if (strcmp(item->key, key) == 0)
             return item->value;
+
+        if (head == NULL)
+            return NULL;
+        
+        while (head != NULL) {
+            if (strcmp(head->item->key, key) == 0) {
+                return head->item->value;
+            }
+            head = head->next;
         }
     }
     return NULL;
@@ -169,4 +192,22 @@ void free_linked_list(LinkedList *list) {
         free(temp->item);
         free(temp);
     }
+}
+
+LinkedList **create_overflow_buckets(HashTable *table) {
+    LinkedList **buckets = calloc(table->size, sizeof(LinkedList *));
+
+    for (int i = 0; i < table->size; i++) {
+        buckets[i] = NULL;
+    }
+    return buckets;
+}
+
+void free_overflow_buckets(HashTable *table) {
+
+    LinkedList **buckets = table->overflow_buckets;
+    for (int i = 0 ; i < table->size; i++) {
+        free_linked_list(buckets[i]);
+    }
+    free(buckets);
 }

@@ -29,6 +29,6 @@ HashTable *create_table(int size);
 void free_item(Ht_item *item);
 void free_table(HashTable *table);
 void print_table(HashTable *table);
-void handle_collision (HashTable *table, Ht_item *item);
+void handle_collision (HashTable *table, unsigned long, Ht_item *item);
 
 #endif
