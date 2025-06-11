@@ -1,7 +1,7 @@
 
 #include "crc.h"
 
-uint16_t crc16(uint16_t crc, uint8_t *buffer, size_t len)
+uint16_t hash_string(uint16_t crc, char *buffer, size_t len)
 {
     while (len--)
         crc = crc16_byte(crc, *buffer++);

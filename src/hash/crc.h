@@ -43,6 +43,6 @@ static inline uint16_t crc16_byte(uint16_t crc, uint8_t data)
     return (crc >> 8) ^ crc16_table[(crc ^ data) & 0xff];
 }
 
-uint16_t crc16(uint16_t, uint8_t *, size_t);
+uint16_t hash_string(uint16_t, char * , size_t);
 
 #endif

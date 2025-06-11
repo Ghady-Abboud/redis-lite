@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "crc.h"
 
-#define HASH_TABLE_SIZE 1000
+#define HASH_TABLE_SIZE 65535
 
 typedef struct Ht_item {
     char *key;
