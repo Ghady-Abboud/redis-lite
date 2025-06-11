@@ -38,5 +38,6 @@ Ht_item *linked_list_remove(LinkedList *list);
 void free_linked_list(LinkedList *list);
 LinkedList **create_overflow_buckets(HashTable *table);
 void free_overflow_buckets(HashTable *table);
+void ht_delete(HashTable *table, char *key);
 
 #endif

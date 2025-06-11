@@ -4,8 +4,8 @@
 #include "crc.h"
 #include "hashtable.h"
 
-
-Ht_item *create_item(const char *key, const char *value) {
+Ht_item *create_item(const char *key, const char *value)
+{
     Ht_item *item = malloc(sizeof(Ht_item));
     item->key = malloc(strlen(key) + 1);
     item->value = malloc(strlen(value) + 1);
@@ -14,30 +14,35 @@ Ht_item *create_item(const char *key, const char *value) {
     return item;
 }
 
-HashTable *create_table(int size) {
+HashTable *create_table(int size)
+{
     HashTable *table = malloc(sizeof(HashTable));
     table->size = size;
     table->count = 0;
     table->items = calloc(table->size, sizeof(Ht_item *));
 
-    for (int i =0;i<table->size;i++)
+    for (int i = 0; i < table->size; i++)
         table->items[i] = NULL;
 
     table->overflow_buckets = create_overflow_buckets(table);
     return table;
 }
 
-void free_item(Ht_item *item) {
+void free_item(Ht_item *item)
+{
     free(item->key);
     free(item->value);
     free(item);
 }
 
-void free_table(HashTable *table) {
-    for (int i =0;i<table->size;i++) {
+void free_table(HashTable *table)
+{
+    for (int i = 0; i < table->size; i++)
+    {
         Ht_item *item = table->items[i];
-        
-        if (item != NULL) {
+
+        if (item != NULL)
+        {
             free_item(item);
         }
     }
@@ -46,13 +51,16 @@ void free_table(HashTable *table) {
     free(table);
 }
 
-void ht_insert(HashTable *table, char *key, char *value) {
-    Ht_item *item = create_item(key,value);
-    int index = hash_string(0,key,strlen(key));
+void ht_insert(HashTable *table, char *key, char *value)
+{
+    Ht_item *item = create_item(key, value);
+    int index = hash_string(0, key, strlen(key));
 
     Ht_item *current_item = table->items[index];
-    if (current_item == NULL) {
-        if (table->count == table->size) {
+    if (current_item == NULL)
+    {
+        if (table->count == table->size)
+        {
             printf("Insert Error: Hash Table is full\n");
             free_item(current_item);
             return;
@@ -60,44 +68,110 @@ void ht_insert(HashTable *table, char *key, char *value) {
 
         table->items[index] = item;
         table->count++;
-    } else {
-        if (strcmp(current_item->key, key) == 0) {
-            strcpy(table->items[index] -> value, value);
+    }
+    else
+    {
+        if (strcmp(current_item->key, key) == 0)
+        {
+            strcpy(table->items[index]->value, value);
             return;
-        } else {
+        }
+        else
+        {
             handle_collision(table, index, item);
         }
     }
 }
 
-void handle_collision(HashTable *table, unsigned long index, Ht_item *item) {
+void ht_delete(HashTable *table, char *key)
+{
+    int index = hash_string(0, key, strlen(key));
+    Ht_item *item = table->items[index];
     LinkedList *head = table->overflow_buckets[index];
 
-    if (head == NULL) {
+    if (item == NULL)
+    {
+        return;
+    }
+    else
+    {
+        if (head == NULL && strcmp(item->key, key) == 0)
+        {
+            table->items[index] = NULL;
+            free_item(item);
+            table->count--;
+            return;
+        }
+        else if (head != NULL && strcmp(item->key, key) == 0)
+        {
+            free_item(item);
+            LinkedList *node = head;
+            head = head->next;
+            node->next = NULL;
+            table->items[index] = create_item(node->item->key, node->item->value);
+            free_linked_list(node);
+            table->overflow_buckets[index] = head;
+            return;
+        }
+
+        LinkedList *cur = head;
+        LinkedList *prev = NULL;
+
+        while (cur) {
+            if (strcmp(cur->item->key, key) == 0) {
+                if (prev == NULL) {
+                    free_linked_list(head);
+                    table->overflow_buckets[index] = NULL;
+                    return;
+                } else {
+                    prev->next = cur->next;
+                    free_linked_list(cur);
+                    table->overflow_buckets[index] = head;
+                    return;
+                }
+            }
+            cur = cur->next;
+            prev = cur;
+        }
+    }
+}
+
+void handle_collision(HashTable *table, unsigned long index, Ht_item *item)
+{
+    LinkedList *head = table->overflow_buckets[index];
+
+    if (head == NULL)
+    {
         head = allocate_list();
         head->item = item;
         table->overflow_buckets[index] = head;
         return;
-    } else {
+    }
+    else
+    {
         table->overflow_buckets[index] = linked_list_insert(head, item);
         return;
     }
 }
 
-char *ht_search(HashTable *table, char *key) {
-    int index = hash_string(0,key, strlen(key));
+char *ht_search(HashTable *table, char *key)
+{
+    int index = hash_string(0, key, strlen(key));
     Ht_item *item = table->items[index];
     LinkedList *head = table->overflow_buckets[index];
 
-    if (item != NULL) {
+    if (item != NULL)
+    {
         if (strcmp(item->key, key) == 0)
             return item->value;
 
         if (head == NULL)
             return NULL;
-        
-        while (head != NULL) {
-            if (strcmp(head->item->key, key) == 0) {
+
+        while (head != NULL)
+        {
+            if (strcmp(head->item->key, key) == 0)
+            {
                 return head->item->value;
             }
             head = head->next;
@@ -106,43 +180,54 @@ char *ht_search(HashTable *table, char *key) {
     return NULL;
 }
 
-void print_search(HashTable *table, char *key) {
+void print_search(HashTable *table, char *key)
+{
     char *val = ht_search(table, key);
-    if (val == NULL) {
+    if (val == NULL)
+    {
         printf("Key:%s does not exist\n", key);
         return;
     }
-    else {
+    else
+    {
         printf("Key:%s, Value:%s\n", key, val);
     }
 }
 
-void print_table(HashTable *table) {
+void print_table(HashTable *table)
+{
     printf("\nHash Table\n------------------\n");
 
-    for (int i =0;i<table->size;i++) {
+    for (int i = 0; i < table->size; i++)
+    {
         Ht_item *item = table->items[i];
 
-        if (item != NULL) {
-            printf("Index:%d, Key:%s, Value:%s\n", i, item->key, item->value);   
+        if (item != NULL)
+        {
+            printf("Index:%d, Key:%s, Value:%s\n", i, item->key, item->value);
         }
     }
     printf("------------------\n");
 }
 
-LinkedList *allocate_list() {
+LinkedList *allocate_list()
+{
     LinkedList *list = malloc(sizeof(LinkedList));
     return list;
 }
 
-LinkedList *linked_list_insert(LinkedList *list, Ht_item *item) {
-    if (!list) {
+LinkedList *linked_list_insert(LinkedList *list, Ht_item *item)
+{
+    if (!list)
+    {
         LinkedList *head = allocate_list();
         head->item = item;
         head->next = NULL;
         list = head;
         return list;
-    } else if (list->next == NULL) {
+    }
+    else if (list->next == NULL)
+    {
         LinkedList *node = allocate_list();
         node->item = item;
         node->next = NULL;
@@ -151,7 +236,8 @@ LinkedList *linked_list_insert(LinkedList *list, Ht_item *item) {
     }
 
     LinkedList *temp = list;
-    while (temp->next != NULL) {
+    while (temp->next != NULL)
+    {
         temp = temp->next;
     }
 
@@ -162,9 +248,11 @@ LinkedList *linked_list_insert(LinkedList *list, Ht_item *item) {
     return list;
 }
 
-Ht_item *linked_list_remove(LinkedList *list) {
+Ht_item *linked_list_remove(LinkedList *list)
+{
     // Remove head node
-    if (!list || !list->next) {
+    if (!list || !list->next)
+    {
         return NULL;
     }
 
@@ -174,17 +262,16 @@ Ht_item *linked_list_remove(LinkedList *list) {
     list = node;
     Ht_item *item = NULL;
     memcpy(temp->item, item, sizeof(Ht_item));
-    free(temp->item->key);
-    free(temp->item->value);
-    free(temp->item);
-    free(temp);
+    free_linked_list(temp);
     return item;
 }
 
-void free_linked_list(LinkedList *list) {
+void free_linked_list(LinkedList *list)
+{
     LinkedList *temp;
 
-    while (list) {
+    while (list)
+    {
         temp = list;
         list = list->next;
         free(temp->item->key);
@@ -194,20 +281,70 @@ void free_linked_list(LinkedList *list) {
     }
 }
 
-LinkedList **create_overflow_buckets(HashTable *table) {
+LinkedList **create_overflow_buckets(HashTable *table)
+{
     LinkedList **buckets = calloc(table->size, sizeof(LinkedList *));
 
-    for (int i = 0; i < table->size; i++) {
+    for (int i = 0; i < table->size; i++)
+    {
         buckets[i] = NULL;
     }
     return buckets;
 }
 
-void free_overflow_buckets(HashTable *table) {
+void free_overflow_buckets(HashTable *table)
+{
 
     LinkedList **buckets = table->overflow_buckets;
-    for (int i = 0 ; i < table->size; i++) {
+    for (int i = 0; i < table->size; i++)
+    {
         free_linked_list(buckets[i]);
     }
     free(buckets);
+}
+
+void main() {
+    printf("\n=== STRESS TEST START ===\n");
+    
+    HashTable *ht = create_table(HASH_TABLE_SIZE);  // Smaller table to force collisions
+    
+    // Test 1: Insert many items
+    printf("Test 1: Inserting 500 items...\n");
+    char key[20], value[50];
+    for (int i = 0; i < 50000; i++) {
+        sprintf(key, "key_%d", i);
+        sprintf(value, "value_for_key_%d", i);
+        ht_insert(ht, key, value);
+    }
+    printf("Inserted 500 items. Table count: %d\n", ht->count);
+    
+    // Test 2: Search all items
+    printf("Test 2: Searching all 500 items...\n");
+    int found_count = 0;
+    for (int i = 0; i < 500; i++) {
+        sprintf(key, "key_%d", i);
+        char *result = ht_search(ht, key);
+        if (result != NULL) found_count++;
+    }
+    printf("Found %d out of 500 items\n", found_count);
+    
+    // Test 3: Delete half the items
+    printf("Test 3: Deleting 250 items...\n");
+    for (int i = 0; i < 250; i++) {
+        sprintf(key, "key_%d", i);
+        ht_delete(ht, key);
+    }
+    
+    // Test 4: Verify deletions
+    printf("Test 4: Verifying deletions...\n");
+    int remaining_count = 0;
+    for (int i = 0; i < 500; i++) {
+        sprintf(key, "key_%d", i);
+        char *result = ht_search(ht, key);
+        if (result != NULL) remaining_count++;
+    }
+    printf("Remaining items: %d (expected: 250)\n", remaining_count);
+    
+    free_table(ht);
+    printf("=== STRESS TEST COMPLETE ===\n\n");
 }
