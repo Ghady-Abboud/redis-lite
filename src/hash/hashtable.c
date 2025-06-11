@@ -59,13 +59,6 @@ void ht_insert(HashTable *table, char *key, char *value)
     Ht_item *current_item = table->items[index];
     if (current_item == NULL)
     {
-        if (table->count == table->size)
-        {
-            printf("Insert Error: Hash Table is full\n");
-            free_item(current_item);
-            return;
-        }
-
         table->items[index] = item;
         table->count++;
     }
@@ -73,7 +66,10 @@ void ht_insert(HashTable *table, char *key, char *value)
     {
         if (strcmp(current_item->key, key) == 0)
         {
+            free(table->items[index]->value);
+            table->items[index]->value = malloc(strlen(value) + 1);
             strcpy(table->items[index]->value, value);
+            free_item(item);
             return;
         }
         else
@@ -145,11 +141,13 @@ void handle_collision(HashTable *table, unsigned long index, Ht_item *item)
         head = allocate_list();
         head->item = item;
         table->overflow_buckets[index] = head;
+        table->count++;
         return;
     }
     else
     {
         table->overflow_buckets[index] = linked_list_insert(head, item);
+        table->count++;
         return;
     }
 }
@@ -309,17 +307,17 @@ void main() {
     HashTable *ht = create_table(HASH_TABLE_SIZE);  // Smaller table to force collisions
     
     // Test 1: Insert many items
-    printf("Test 1: Inserting 500 items...\n");
+    printf("Test 1: Inserting 50,000 items...\n");  // Fix message
     char key[20], value[50];
     for (int i = 0; i < 50000; i++) {
         sprintf(key, "key_%d", i);
         sprintf(value, "value_for_key_%d", i);
         ht_insert(ht, key, value);
     }
-    printf("Inserted 500 items. Table count: %d\n", ht->count);
+    printf("Inserted 50,000 items. Table count: %d\n", ht->count);  // Fix message
     
-    // Test 2: Search all items
-    printf("Test 2: Searching all 500 items...\n");
+    // Test 2: Search random sample
+    printf("Test 2: Searching 500 random items...\n");
     int found_count = 0;
     for (int i = 0; i < 500; i++) {
         sprintf(key, "key_%d", i);
@@ -328,8 +326,8 @@ void main() {
     }
     printf("Found %d out of 500 items\n", found_count);
     
-    // Test 3: Delete half the items
-    printf("Test 3: Deleting 250 items...\n");
+    // Test 3: Delete items
+    printf("Test 3: Deleting first 250 items...\n");
     for (int i = 0; i < 250; i++) {
         sprintf(key, "key_%d", i);
         ht_delete(ht, key);
@@ -338,12 +336,12 @@ void main() {
     // Test 4: Verify deletions
     printf("Test 4: Verifying deletions...\n");
     int remaining_count = 0;
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 500; i++) {  // Check first 500
         sprintf(key, "key_%d", i);
         char *result = ht_search(ht, key);
         if (result != NULL) remaining_count++;
     }
-    printf("Remaining items: %d (expected: 250)\n", remaining_count);
+    printf("Remaining items in first 500: %d (expected: 250)\n", remaining_count);
     
     free_table(ht);
     printf("=== STRESS TEST COMPLETE ===\n\n");

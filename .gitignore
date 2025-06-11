@@ -3,3 +3,5 @@ build
 valgrind-out.txt
 *vgcore
 *.o
+/a.out
+redis-lite
