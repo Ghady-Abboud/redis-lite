@@ -18,10 +18,16 @@ typedef struct HashTable {
     int count;
 } HashTable;
 
+typedef struct LinkedList {
+    Ht_item *item;
+    struct LinkedList *next;
+} LinkedList;
+
 Ht_item *create_item(const char *key, const char *value);
 HashTable *create_table(int size);
 void free_item(Ht_item *item);
 void free_table(HashTable *table);
 void print_table(HashTable *table);
+void handle_collision (HashTable *table, Ht_item *item);
 
 #endif
