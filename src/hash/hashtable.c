@@ -138,3 +138,35 @@ LinkedList *linked_list_insert(LinkedList *list, Ht_item *item) {
     temp->next = node;
     return list;
 }
+
+Ht_item *linked_list_remove(LinkedList *list) {
+    // Remove head node
+    if (!list || !list->next) {
+        return NULL;
+    }
+
+    LinkedList *node = list->next;
+    LinkedList *temp = list;
+    temp->next = NULL;
+    list = node;
+    Ht_item *item = NULL;
+    memcpy(temp->item, item, sizeof(Ht_item));
+    free(temp->item->key);
+    free(temp->item->value);
+    free(temp->item);
+    free(temp);
+    return item;
+}
+
+void free_linked_list(LinkedList *list) {
+    LinkedList *temp;
+
+    while (list) {
+        temp = list;
+        list = list->next;
+        free(temp->item->key);
+        free(temp->item->value);
+        free(temp->item);
+        free(temp);
+    }
+}

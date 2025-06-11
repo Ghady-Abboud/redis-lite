@@ -14,6 +14,7 @@ typedef struct Ht_item {
 
 typedef struct HashTable {
     Ht_item **items;
+    LinkedList **overflow_buckets;
     int size;
     int count;
 } HashTable;
