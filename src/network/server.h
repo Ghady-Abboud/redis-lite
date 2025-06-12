@@ -10,7 +10,6 @@
 void socket_init();
 int bind_socket(int fd);
 void listen_socket(int fd, int rv);
-int32_t one_request(int connfd);
 void fd_set_nonblocking(int fd);
 struct Conn *handle_accept(int fd);
 void handle_write(struct Conn *conn);
