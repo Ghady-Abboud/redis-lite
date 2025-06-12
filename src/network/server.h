@@ -16,5 +16,6 @@ struct Conn *handle_accept(int fd);
 void handle_write(struct Conn *conn);
 void handle_read(struct Conn *conn);
 bool try_one_request(struct Conn *conn);
+void free_connection(struct Conn *conn);
 
 #endif

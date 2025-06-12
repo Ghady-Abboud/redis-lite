@@ -127,9 +127,8 @@ void socket_init()
 
             if ((ready & POLLERR) || conn->want_close)
             {
-                (void)close(conn->fd);
                 fd_to_conn[conn->fd] = NULL;
-                free(conn);
+                free_connection(conn);
             }
         }
     }
@@ -244,18 +243,26 @@ struct Conn *handle_accept(int fd)
 
     if (init_buffer(&conn->incoming, 1024) != 0)
     {
-        free(conn);
-        close(connfd);
+        free_connection(conn);
         return NULL;
     }
 
     if (init_buffer(&conn->outgoing, 1024) != 0)
     {
-        free_buffer(&conn->incoming);
-        free(conn);
-        close(connfd);
+        free_connection(conn);
         return NULL;
     }
 
     return conn;
+}
+
+void free_connection(struct Conn *conn)
+{
+    if (conn == NULL)
+        return;
+    
+    free_buffer(&conn->incoming);
+    free_buffer(&conn->outgoing);
+    close(conn->fd);
+    free(conn);
 }
