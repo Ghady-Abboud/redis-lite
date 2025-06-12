@@ -1,16 +1,16 @@
 [X] Server Client Architecture
 [X] HT Implementation
 [] Command Parser
+[] Separate Client and Server binaries for production
 [] Implement TTL expiration
 [] Implement sorted sets & balanced trees
 [] Implement signal interruption cleanup
-[] Add Client Authentication
-[] Separate Client and Server binaries for production
+[] Add client tracking for separate sessions 
 
 
 
 ## 🚀 Deployment Notes
-- Single-user server (no multi-tenant isolation)
+- Single-user server 
 - Deploy separate instances for different users
 - Suitable for development, caching, single-application use
 
