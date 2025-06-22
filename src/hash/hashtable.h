@@ -25,11 +25,13 @@ typedef struct HashTable {
 
 Ht_item *create_item(const char *key, const char *value);
 HashTable *create_table(int size);
+void ht_delete(HashTable *table, char *key);
 void free_item(Ht_item *item);
 void free_table(HashTable *table);
 void print_table(HashTable *table);
 void handle_collision (HashTable *table, unsigned long, Ht_item *item);
 char *ht_search(HashTable *table, char *key);
+void ht_insert(HashTable *table, char *key, char *value);
 void print_search(HashTable *table, char *key);
 LinkedList *allocate_list();
 LinkedList *linked_list_insert(LinkedList *list, Ht_item *item);
@@ -37,6 +39,5 @@ Ht_item *linked_list_remove(LinkedList *list);
 void free_linked_list(LinkedList *list);
 LinkedList **create_overflow_buckets(HashTable *table);
 void free_overflow_buckets(HashTable *table);
-void ht_delete(HashTable *table, char *key);
 
 #endif

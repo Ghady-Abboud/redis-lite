@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -g
+CFLAGS = -std=c11 -Wall -g -I src/hash -I src/network
 
 # Find all .c files and create corresponding .o files
 SOURCES = $(shell find src -name '*.c')

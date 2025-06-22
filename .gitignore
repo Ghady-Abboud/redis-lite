@@ -5,3 +5,4 @@ valgrind-out.txt
 *.o
 /a.out
 redis-lite
+/*.github
