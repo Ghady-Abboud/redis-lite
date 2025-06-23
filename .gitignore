@@ -4,5 +4,6 @@ valgrind-out.txt
 *vgcore
 *.o
 /a.out
-redis-lite
+redis-client
+redis-server
 /*.github
