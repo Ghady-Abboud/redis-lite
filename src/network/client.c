@@ -15,7 +15,7 @@ void client_socket_init()
     int fd = socket(AF_INET, SOCK_STREAM, 0);
 
     client_connect_socket(fd);
-    send_multiple_requests(fd);
+    send_to_server(fd);
 }
 
 void client_connect_socket(int fd)
@@ -30,20 +30,25 @@ void client_connect_socket(int fd)
     }
 }
 
-int send_multiple_requests(int fd)
+int send_to_server(int fd)
 {
-    int32_t err = query(fd, "hello1");
-    if (err)
-        goto L_DONE;
-
-    err = query(fd, "hello2");
-    if (err)
-        goto L_DONE;
-    err = query(fd, "hello3");
-    if (err)
-        goto L_DONE;
-L_DONE:
-    close(fd);
+    while (1) {
+        char text[1024];
+        printf("Enter command (or 'exit' to quit): ");
+        fgets(text, sizeof(text), stdin);
+        text[strcspn(text, "\n")] = 0;
+        if (strcmp(text, "exit") == 0) {
+            close(fd);
+            return 0;
+        }
+        printf("Sending query: %s\n", text);
+        int32_t err = query(fd, text);
+        if (err) {
+            printf("Error sending query: %d\n", err);
+            close(fd);
+            return -1;
+        }
+    }
     return 0;
 }
 

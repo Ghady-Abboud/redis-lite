@@ -10,6 +10,8 @@
 
 #include "server.h"
 #include "buffer.h"
+#include "parser.h"
+#include "hashtable.h"
 
 struct Conn
 {
@@ -22,6 +24,8 @@ struct Conn
     struct Buffer incoming;
     struct Buffer outgoing;
 };
+
+static HashTable *ht;
 
 void socket_init()
 {
@@ -46,6 +50,7 @@ void socket_init()
     size_t poll_count = 0;
     size_t poll_capacity = 0;
 
+    ht = create_table(65530);
     while (1)
     {
         poll_count = 0;
@@ -179,10 +184,16 @@ bool try_one_request(struct Conn *conn)
 
     const uint8_t *request = &conn->incoming.data[4];
 
+    char command[len + 1];
+    memcpy(command, request, len);
+    command[len] = '\0';
+
+    parse_line(command, ht);
+
     buf_append(&conn->outgoing, (const uint8_t *)&len, 4);
     buf_append(&conn->outgoing, request, (size_t)len);
-    buf_consume(&conn->incoming, 4 + len);
 
+    buf_consume(&conn->incoming, 4 + len);
     conn->want_read = true;
     return true;
 }
