@@ -3,6 +3,8 @@
 - [X] HT Implementation
 - [X] Command Parser
 - [] Separate Client and Server binaries for production
+- [] Add performance metrics
+- [] Add persistence
 - [] Implement TTL expiration
 - [] Implement sorted sets & balanced trees
 - [] Implement signal interruption cleanup
