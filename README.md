@@ -2,7 +2,7 @@
 - [X] Server Client Architecture
 - [X] HT Implementation
 - [X] Command Parser
-- [] Separate Client and Server binaries for production
+- [X] Separate Client and Server binaries for production
 - [] Add performance metrics
 - [] Add persistence
 - [] Implement TTL expiration
