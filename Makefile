@@ -1,30 +1,31 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -g -I src/hash -I src/network
 
-# Find all .c files and create corresponding .o files
-SOURCES = $(shell find src -name '*.c')
-OBJECTS = $(SOURCES:.c=.o)
+# Separate source files
+SERVER_SOURCES = src/network/server.c src/network/protocol.c src/network/commonSocket.c src/network/buffer.c src/network/parser.c src/hash/crc.c src/hash/hashtable.c src/server_main.c
+CLIENT_SOURCES = src/network/client.c src/network/protocol.c src/network/commonSocket.c src/client_main.c
 
-# Default target
-all: redis-lite
+SERVER_OBJECTS = $(SERVER_SOURCES:.c=.o)
+CLIENT_OBJECTS = $(CLIENT_SOURCES:.c=.o)
 
-# Link the executable
-redis-lite: $(OBJECTS)
+all: redis-server redis-client
+
+redis-server: $(SERVER_OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-# Compile .c files to .o files
+redis-client: $(CLIENT_OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $^
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean up
 clean:
-	rm -f $(OBJECTS) redis-lite
+	rm -f $(SERVER_OBJECTS) $(CLIENT_OBJECTS) redis-server redis-client
 
-# Run targets
-server: redis-lite
-	./redis-lite server
+server: redis-server
+	./redis-server
 
-client: redis-lite
-	./redis-lite client
+client: redis-client
+	./redis-client
 
 .PHONY: all clean server client
