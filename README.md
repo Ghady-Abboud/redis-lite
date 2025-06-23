@@ -1,11 +1,12 @@
-[X] Server Client Architecture
-[X] HT Implementation
-[] Command Parser
-[] Separate Client and Server binaries for production
-[] Implement TTL expiration
-[] Implement sorted sets & balanced trees
-[] Implement signal interruption cleanup
-[] Add client tracking for separate sessions 
+## Todo list
+- [X] Server Client Architecture
+- [X] HT Implementation
+- [X] Command Parser
+- [] Separate Client and Server binaries for production
+- [] Implement TTL expiration
+- [] Implement sorted sets & balanced trees
+- [] Implement signal interruption cleanup
+- [] Add client tracking for separate sessions 
 
 
 
