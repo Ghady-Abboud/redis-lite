@@ -1,0 +1,5 @@
+*.o
+redis-server
+redis-client
+.git
+README.md
