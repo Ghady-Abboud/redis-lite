@@ -3,7 +3,7 @@
 
 #include <netinet/in.h>
 
-#define PORT 1234
+#define PORT 6379
 #define DOMAIN AF_INET
 
 struct sockaddr_in create_address(int use_loopback);
