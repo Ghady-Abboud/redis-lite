@@ -17,10 +17,6 @@
 - **0.51ms average response time** under 10,000 concurrent requests
 - Consistent performance across varying load conditions
 
-### Throughput & Scalability
-- Handles **10,000+ concurrent connections**
-- Efficient memory management with custom hashtable implementation
-
 ### Load Testing Results
 ```
 Test Configuration: 10,000 concurrent clients
