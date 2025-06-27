@@ -12,6 +12,7 @@
 #include "buffer.h"
 #include "parser.h"
 #include "hashtable.h"
+#include "metrics.h"
 
 struct Conn
 {
@@ -182,6 +183,7 @@ bool try_one_request(struct Conn *conn)
     if (4 + len > conn->incoming.size)
         return false;
 
+    double start_time = get_time_ms();
     const uint8_t *request = &conn->incoming.data[4];
 
     char command[len + 1];
@@ -195,6 +197,13 @@ bool try_one_request(struct Conn *conn)
 
     buf_consume(&conn->incoming, 4 + len);
     conn->want_read = true;
+    double end_time = get_time_ms();
+    metrics_add_request(end_time - start_time);
+
+    static uint64_t request_cnt = 0;
+    request_cnt++;
+    if (request_cnt % 2 == 0)
+        metrics_print();
     return true;
 }
 
