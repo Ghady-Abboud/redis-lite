@@ -10,19 +10,16 @@
 - [] Implement signal interruption cleanup
 - [] Add client tracking for separate sessions
 
-- ## Performance Metrics
+## Performance Metrics
 
 ### Latency Performance
 - **0.12ms average response time** under normal load
 - **0.51ms average response time** under 10,000 concurrent requests
-- **Sub-millisecond latency** maintained at scale
 - Consistent performance across varying load conditions
 
 ### Throughput & Scalability
 - Handles **10,000+ concurrent connections**
-- Non-blocking I/O architecture for high concurrency
 - Efficient memory management with custom hashtable implementation
-- Production-grade performance comparable to Redis
 
 ### Load Testing Results
 ```
@@ -35,11 +32,10 @@ Results:
 ```
 
 ### Architecture Highlights
-- **Non-blocking event-driven I/O** using epoll/poll
+- **Non-blocking event-driven I/O** using poll
 - **Custom hashtable** with collision resolution
 - **Length-prefixed protocol** for efficient message parsing
 - **Real-time metrics collection** for performance monitoring
-- **Docker containerization** for consistent deployment
 
 ### Benchmarking
 Run included load testing suite:
@@ -53,4 +49,3 @@ python3 load_testing.py
 |--------|------------|---------------|
 | Latency | 0.51ms | 0.1-1ms |
 | Concurrency | 10K+ | 10K+ |
-| Memory | Efficient | Baseline |
